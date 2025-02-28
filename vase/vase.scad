@@ -51,7 +51,7 @@ module vase_shell() {
         height = 10,
         twist = 180,
         scale_fn = [vase_scale_fn, vase_scale_fn],
-        $fn = 100
+        $fn = 500
     )
         rounded_n_gon(radius = 4);
 
