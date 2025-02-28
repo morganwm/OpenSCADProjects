@@ -1,0 +1,49 @@
+on:
+  release:
+    types: [published]
+name: Upload Release Asset
+jobs:
+  release:
+    name: Upload Release Asset
+    permissions: write-all
+    runs-on: ubuntu-latest
+    container: openscad/openscad:dev
+    strategy:
+      fail-fast: true
+      matrix:
+        project: [rose]
+        output: [3mf,png]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Artifacts
+        run: |
+          mkdir -p out
+          openscad -o ./out/${{ matrix.project }}.${{ matrix.output }} -P default ./${{ matrix.project }}/${{ matrix.project }}.scad
+
+      - name: Upload release artifacts
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs").promises;
+            const { repo: { owner, repo }, sha } = context;
+
+            const release = await github.rest.repos.getReleaseByTag({
+              owner, repo,
+              tag: process.env.GITHUB_REF.replace("refs/tags/", ""),
+            });
+            console.log("Release:", { release });
+
+            for (let file of await fs.readdir("./out")) {
+              let foundFile = `./out/${file}`;
+              console.log("Uploading", foundFile);
+              await github.rest.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id: release.data.id,
+                name: foundFile,
+                data: await fs.readFile(foundFile),
+              });            
+            }
