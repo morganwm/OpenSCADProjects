@@ -1,4 +1,5 @@
 use <variable_extrude.scad>
+use <extrude_plot_func.scad>
 
 $fa = 1;
 $fs = 0.01;
@@ -43,48 +44,50 @@ module rounded_n_gon_3d(sides = 6, radius = 1, corner_radius = 0.25) {
 
 function cos_scale_fn(z) = cos(z*360+250)*0.3+0.7;
 
-module vase_shell() {
+module vase_shell(radius = 4, height = 10, resolution = 500) {
 
+    // vase_scale_fn = function(z) mod_cos_scale_fn(z);
     vase_scale_fn = function(z) cos_scale_fn(z);
 
     variable_extrude(
-        height = 10,
+        height = height,
         twist = 180,
         scale_fn = [vase_scale_fn, vase_scale_fn],
-        $fn = 500
+        $fn = resolution
     )
-        rounded_n_gon(radius = 4);
+        rounded_n_gon(radius = radius);
 
     translate([0,0,10])
         scale(vase_scale_fn(1)) 
-        rounded_n_gon_3d(radius = 4);
+        rounded_n_gon_3d(radius = radius);
 }
 
 // vase_shell();
 
-module vase_cutout() {
+module vase_cutout(radius = 3, height = 10, resolution = 100) {
 
+    // vase_cutout_scale_fn = function(z) mod_cos_scale_fn(z);
     vase_cutout_scale_fn = function(z) cos_scale_fn(z);
 
     variable_extrude(
-        height = 10,
+        height = height,
         scale_fn = [vase_cutout_scale_fn, vase_cutout_scale_fn],
-        $fn = 100
+        $fn = resolution
     ) {
-        circle(r = 3);
+        circle(r = radius);
     }
 }
 
 // vase_cutout();
 
-module vase() {
+module vase(radius = 4, height = 10) {
     difference() {
         color(alpha = 0.1) 
-        vase_shell();
+        vase_shell(radius = radius, height = height);
 
-        translate([0,0,0.25]) 
-        vase_cutout();
+        translate([0,0,radius/40]) 
+        vase_cutout(radius = radius -1, height = 10);
     }
 }
 
-vase();
+vase(radius = 3, height = 10);
